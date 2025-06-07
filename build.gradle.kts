@@ -79,6 +79,7 @@ legacyForge {
             // "SCAN": For mods scan.
             // "REGISTRIES": For firing of registry events.
             // "REGISTRYDUMP": For getting the contents of all registries.
+            gameDirectory.set(file("run-$name"))
             systemProperty("forge.logging.markers", "REGISTRIES")
 
             // Recommended logging level for the console
