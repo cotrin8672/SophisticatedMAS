@@ -92,6 +92,8 @@ repositories {
     }
     maven("https://maven.createmod.net")
     maven("https://modmaven.dev")
+    maven("https://api.modrinth.com/maven")
+    maven("https://maven.tterrag.com/")
 }
 
 dependencies {
@@ -104,6 +106,12 @@ dependencies {
     compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:$mixinExtraVersion")!!)
     implementation("io.github.llamalad7:mixinextras-forge:$mixinExtraVersion")
     annotationProcessor("org.spongepowered:mixin:$mixinVersion:processor")
+
+    modImplementation("maven.modrinth:sophisticated-core:1.20.1-1.2.105.1230")
+    modImplementation("maven.modrinth:sophisticated-backpacks:1.20.1-3.24.9.1391")
+    modImplementation("maven.modrinth:mine-and-slash:6.3.7")
+
+    modImplementation("com.tterrag.registrate:Registrate:MC1.20-1.3.3")
 }
 
 /*
@@ -138,9 +146,15 @@ publisher {
 
     curseDepends {
         required("kotlin-for-forge")
+        required("sophisticated-core")
+        required("sophisticated-backpacks")
+        required("mine-and-slash-reloaded")
     }
     modrinthDepends {
         required("kotlin-for-forge")
+        required("sophisticated-core")
+        required("sophisticated-backpacks")
+        required("mine-and-slash")
     }
 }
 
