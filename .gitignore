@@ -24,3 +24,10 @@ runs
 run-data
 
 repo
+
+# serena memory
+.serena/
+
+# temporary files
+temp_*.py
+%SystemDrive%/
