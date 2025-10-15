@@ -1,331 +1,838 @@
-# Implementation Plan
+# Implementation Plan - Auto Salvage Backpack Upgrade
 
 ## Task Overview
 自動サルベージバックパックアップグレード機能の実装タスク。Mine and SlashギアをSophisticated Backpacks内で自動サルベージし、素材を安全に回収する機能を提供する。
 
-**重要**: このタスクは、Sophisticated BackpacksとMine and Slashの実際のコードベースを確認した上で作成されています。
+**重要**:
+- **アイテム挿入イベントベース**: tick処理ではなく`IInventoryWrapperUpgrade`インターフェースを使用してアイテム挿入時に直接処理する
+- **Code Context MCPによる調査済み**: Sophisticated BackpacksとMine and Slashの実際のコードベースを詳細に調査した上で作成
+- **Registrateを使用**: アイテム登録とデータ生成を簡略化するためにRegistrateライブラリを使用
+
+---
 
 ## Implementation Tasks
 
-- [ ] 1. プロジェクト構造とMODエントリポイントを構築する
-  - MODエントリポイントクラス（`SophisticatedMAS.kt`）を作成する
-  - MOD IDを`sophisticatedmas`として定義する
-  - `@Mod`アノテーションでForgeに登録する
-  - ロガーを初期化する（`LogManager.getLogger()`）
-  - _Requirements: すべての要件実装に必要な基盤_
+### Phase 1: プロジェクト基盤とRegistrate設定
 
-- [ ] 2. アイテム登録システムを実装する
-- [ ] 2.1 ModItemsクラスを作成する
-  - `DeferredRegister.create(ForgeRegistries.ITEMS, MOD_ID)`を使用してDeferredRegisterを作成する
-  - `register(IEventBus)`メソッドを実装する
-  - パブリックな静的フィールドとしてDeferredRegisterを公開する
-  - _Requirements: 3.1（アップグレード登録の基盤）_
-  - _参考コード: `ModItems.java` in Sophisticated Backpacks_
+#### Task 1.1: MODエントリポイントとRegistrateインスタンスを構築する
+**作業内容:**
+- `SophisticatedMAS.kt`を更新
+  ```kotlin
+  @Mod(ModIdentity.MOD_ID)
+  object SophisticatedMASMod {
+      val LOGGER: Logger = LogManager.getLogger(ModIdentity.LOGGER_NAME)
 
-- [ ] 2.2 AutoSalvageUpgradeItemを登録する
-  - `ModItems.ITEMS.register("auto_salvage_upgrade", () -> new AutoSalvageUpgradeItem())`を追加する
-  - `RegistryObject<AutoSalvageUpgradeItem>`として保持する
-  - MODコンストラクタで`ModItems.register(modEventBus)`を呼び出す
-  - _Requirements: 3.1_
+      // Registrateインスタンス
+      val REGISTRATE: Registrate = Registrate.create(ModIdentity.MOD_ID)
 
-- [ ] 3. AutoSalvageUpgradeItemクラスを実装する
-- [ ] 3.1 基本構造を作成する
-  - `UpgradeItemBase<AutoSalvageUpgradeWrapper>`を継承する
-  - `public static final UpgradeType<AutoSalvageUpgradeWrapper> TYPE = new UpgradeType<>(AutoSalvageUpgradeWrapper::new)`を定義する
-  - コンストラクタで最大装着数を設定する（`super(Config.SERVER.maxUpgradesPerStorage)`または固定値）
-  - `getType()`メソッドをオーバーライドしてTYPEを返す
-  - `getUpgradeConflicts()`で空のリストを返す（競合なし）
-  - _Requirements: 3.1_
-  - _参考コード: `EverlastingUpgradeItem.java`_
+      init {
+          LOGGER.info("${ModIdentity.MOD_NAME} is initializing...")
+          LOGGER.info("Registrate instance created")
+      }
+  }
+  ```
 
-- [ ] 3.2 クリエイティブタブへの追加
-  - アイテムプロパティでクリエイティブタブを設定する
-  - Sophisticated Backpacksのアップグレードタブに追加する
-  - _Requirements: 3.1_
+**使用API:**
+- `com.tterrag.registrate.Registrate.create(String)`
+- イベントバスへの登録は自動的に行われる
 
-- [ ] 4. AutoSalvageUpgradeWrapperクラスを実装する
-- [ ] 4.1 基本構造とフィールドを作成する
-  - `UpgradeWrapperBase<AutoSalvageUpgradeWrapper, AutoSalvageUpgradeItem>`を継承する
-  - `ITickableUpgrade`インターフェースを実装する
-  - コンストラクタ: `(IStorageWrapper storageWrapper, ItemStack upgrade, Consumer<ItemStack> upgradeSaveHandler)`
-  - スロット状態キャッシュ用のMap: `Map<Integer, ItemStackSnapshot>`を定義する
-  - Tickカウンター: `int tickCounter = 0`を定義する
-  - クールダウン定数: `private static final int TICK_INTERVAL = 10`（0.5秒）
-  - _Requirements: 1.1, 3.1, 3.2_
-  - _参考コード: `AnvilUpgradeWrapper.java`, `BackpackItem.java`（tick呼び出し）_
+**参考コード:**
+- `RegistrateWorktrees/1.20/src/main/java/com/tterrag/registrate/Registrate.java:10-43`
 
-- [ ] 4.2 NBT永続化を実装する
-  - コンストラクタでNBTからデータを復元する
-  - `NBTHelper.getCompound(upgrade, "smas_cache").ifPresent(tag -> ...)`を使用
-  - `NBTHelper.getInt(upgrade, "smas_tick_counter").ifPresent(t -> tickCounter = t)`を使用
-  - `save()`メソッド内で`upgrade.addTagElement("smas_cache", serializeCache())`を呼び出す
-  - `upgrade.addTagElement("smas_tick_counter", IntTag.valueOf(tickCounter))`を呼び出す
-  - キャッシュのシリアライズ/デシリアライズメソッドを実装する
-  - _Requirements: 3.1, 3.2_
-  - _参考コード: `AnvilUpgradeWrapper.java`のNBT処理_
+**要件:** 3.1（アップグレード登録の基盤）
+**見積時間:** 30分
 
-- [ ] 4.3 ItemStackSnapshotクラスを実装する
-  - アイテムタイプ、カウント、NBTハッシュを保持するデータクラスを作成する
-  - `equals()`と`hashCode()`を実装して変更検出に使用する
-  - NBTへのシリアライズ/デシリアライズメソッドを実装する
-  - _Requirements: 1.1, 2.1_
+---
 
-- [ ] 5. Tick処理とスロット変更検出を実装する
-- [ ] 5.1 tick()メソッドの基本構造を実装する
-  - `tick(Entity entity, Level level, BlockPos pos)`をオーバーライドする
-  - エンティティがPlayerでない場合は即座にreturnする
-  - `level.isClientSide`の場合は即座にreturnする（サーバー側のみ処理）
-  - Tickカウンターをインクリメントし、`TICK_INTERVAL`で割った余りが0でない場合はreturnする
-  - _Requirements: 1.1_
-  - _参考コード: BackpackItemのonArmorTick()でのITickableUpgrade呼び出し_
+#### Task 1.2: ModItemsオブジェクトを作成してAutoSalvageUpgradeItemを登録する
+**作業内容:**
+- `ModItems.kt`を作成
+  ```kotlin
+  object ModItems {
+      val AUTO_SALVAGE_UPGRADE: ItemEntry<AutoSalvageUpgradeItem> =
+          SophisticatedMASMod.REGISTRATE.item("auto_salvage_upgrade") { _ ->
+              AutoSalvageUpgradeItem()
+          }
+          .properties { props ->
+              props.stacksTo(16).rarity(Rarity.UNCOMMON)
+          }
+          .tab(CreativeModeTabs.TOOLS_AND_UTILITIES)
+          .lang("Auto Salvage Upgrade")
+          .lang("ja_jp", "自動サルベージアップグレード")
+          .register()
 
-- [ ] 5.2 スロット変更検出ロジックを実装する
-  - `ITrackedContentsItemHandler inventory = storageWrapper.getInventoryHandler()`を取得する
-  - 全スロットをループして現在のスナップショットを作成する
-  - キャッシュと現在のスナップショットを比較して変更されたスロットを特定する
-  - 変更されたスロットのみをサルベージ候補リストに追加する
-  - キャッシュを更新する
-  - _Requirements: 1.1, 2.1_
+      fun init() {
+          SophisticatedMASMod.LOGGER.info("Registering items...")
+      }
+  }
+  ```
+- `SophisticatedMASMod`のinitから`ModItems.init()`を呼び出す
 
-- [ ] 6. MAS統合ブリッジを実装する
-- [ ] 6.1 MasIntegrationBridgeクラスを作成する
-  - `ISalvagable.load(ItemStack)`を呼び出してサルベージ可能データを取得する
-  - `ICommonDataItem.load(ItemStack)`を呼び出してMASアイテムデータを取得する
-  - `ExileStack.of(ItemStack)`を使用してExileStackを作成する
-  - null安全のためのOptionalラッパーメソッドを提供する
-  - _Requirements: 1.1, 1.2, 1.3, 1.4, 2.5_
-  - _参考コード: `ISalvagable.java`, `ICommonDataItem.java`_
+**使用API:**
+- `Registrate.item(String, Function<Item.Properties, Item>)`
+- `.properties(Consumer<Item.Properties>)`
+- `.tab(ResourceKey<CreativeModeTab>)`
+- `.lang(String)` / `.lang(String, String)`
+- `.register()` → `ItemEntry<T>`を返す
 
-- [ ] 6.2 プレイヤー設定チェックを実装する
-  - `Load.player(player).config.salvage`を取得する
-  - `checkTypeSalvageConfig(data.getSalvageType(), data.getSalvageConfigurationId())`を呼び出す
-  - `checkRaritySalvageConfig(data.getSalvageType(), data.getRarityId())`を呼び出す
-  - 設定に基づいてサルベージすべきかどうかをboolean値で返す
-  - エンチャント済みアイテムは自動サルベージしない（`stack.isEnchanted()`でチェック）
-  - _Requirements: 1.2, 1.3_
-  - _参考コード: `PlayerConfigData.AutoSalvage.trySalvageOnPickup()`_
+**参考コード:**
+- `RegistrateWorktrees/1.20/src/test/java/com/tterrag/registrate/test/mod/TestMod.java:176-182`
 
-- [ ] 6.3 サルベージ実行メソッドを実装する
-  - `ISalvagable.getSalvageResult(ExileStack)`を呼び出してサルベージ結果を取得する
-  - `List<ItemStack>`として結果を返す
-  - サルベージ不可能な場合は空のリストを返す
-  - _Requirements: 1.1, 2.1_
+**要件:** 3.1
+**見積時間:** 1時間
 
-- [ ] 6.4 経験値付与メソッドを実装する
-  - `ExileDB.Professions().get("salvaging")`でProfessionを取得する
-  - `Load.player(player).professions.addExp(player, profession.GUID(), data.getAutoSalvageExpReward(), false)`を呼び出す
-  - 最後の引数`false`はrested exp bonusを適用しないことを意味する
-  - _Requirements: 2.5_
-  - _参考コード: `PlayerConfigData.AutoSalvage.trySalvageOnPickup()`, `ProfessionBlockEntity.addExp()`_
+---
 
-- [ ] 7. サルベージ処理コアロジックを実装する
-- [ ] 7.1 processCandidates()メソッドを実装する
-  - 変更されたスロットの候補リストを受け取る
-  - 各候補に対してMasIntegrationBridgeを使用してサルベージ判定を行う
-  - サルベージすべきアイテムのリストを作成する
-  - サルベージ成功/失敗の統計情報を集約する
-  - _Requirements: 1.1, 1.2, 1.3, 1.4, 2.1_
+#### Task 1.3: AutoSalvageUpgradeItemクラスを実装する
+**作業内容:**
+- `AutoSalvageUpgradeItem.kt`を作成
+  ```kotlin
+  class AutoSalvageUpgradeItem : UpgradeItemBase<AutoSalvageUpgradeWrapper>(
+      Config.SERVER.maxUpgradesPerStorage
+  ) {
+      companion object {
+          val TYPE: UpgradeType<AutoSalvageUpgradeWrapper> =
+              UpgradeType { storageWrapper, upgrade, saveHandler ->
+                  AutoSalvageUpgradeWrapper(storageWrapper, upgrade, saveHandler)
+              }
+      }
 
-- [ ] 7.2 executeSalvage()メソッドを実装する
-  - MasIntegrationBridgeを使用してサルベージ結果を取得する
-  - 元のアイテムスタックを削除する（`stack.shrink(stack.getCount())`）
-  - サルベージ結果をバックパックに格納する（次のタスク）
-  - 経験値を付与する
-  - サルベージ成功を記録する
-  - _Requirements: 2.1, 2.5_
+      override fun getType(): UpgradeType<AutoSalvageUpgradeWrapper> = TYPE
 
-- [ ] 8. 素材ルーティング戦略を実装する
-- [ ] 8.1 ResultRoutingStrategyクラスを作成する
-  - バックパックへの挿入を試行する: `inventory.insertItem(slot, stack, false)`
-  - バックパック満杯の場合はプレイヤーインベントリへ: `PlayerUtils.giveItem(stack, player)`
-  - 両方満杯の場合はワールドドロップ: `ItemEntity`を作成してスポーン
-  - 各フォールバックの成功/失敗を記録する
-  - _Requirements: 2.2, 2.3, 2.4_
-  - _参考コード: `PlayerConfigData.AutoSalvage.trySalvageOnPickup()`のバックパック統合_
+      override fun getUpgradeConflicts(): List<UpgradeConflictDefinition> = emptyList()
 
-- [ ] 8.2 ルーティング結果の統計情報を返す
-  - バックパックに格納されたアイテム数
-  - プレイヤーインベントリに格納されたアイテム数
-  - ワールドにドロップされたアイテム数
-  - 格納失敗したアイテム数（あれば）
-  - _Requirements: 2.2, 2.3, 2.4_
+      override fun getMemorySettingsCategory(): MemorySettingsCategory = MemorySettingsCategory.EMPTY
+  }
+  ```
 
-- [ ] 9. フィードバックシステムを実装する
-- [ ] 9.1 FeedbackEmitterクラスを作成する
-  - サーバー側でのみ実行される保証を実装する（`!level.isClientSide`チェック）
-  - サルベージ成功時のサウンド再生: `SoundUtils.playSound(player, SoundEvents.EXPERIENCE_ORB_PICKUP, 0.75F, 1.25F)`
-  - サルベージ失敗時のメッセージ通知: `player.sendSystemMessage(Component)`
-  - 失敗理由の分類（バックパック満杯、設定により除外、など）
-  - _Requirements: 3.3, 3.4_
-  - _参考コード: `PlayerConfigData.AutoSalvage.trySalvageOnPickup()`のサウンド再生_
+**使用API:**
+- `net.p3pp3rf1y.sophisticatedcore.upgrades.UpgradeItemBase<W>`
+- `net.p3pp3rf1y.sophisticatedcore.upgrades.UpgradeType<W>`
+- `net.p3pp3rf1y.sophisticatedbackpacks.Config.SERVER.maxUpgradesPerStorage`
 
-- [ ] 9.2 通知メッセージの多言語対応
-  - 言語ファイル用のキーを定義する
-  - 英語メッセージを作成する
-  - 日本語メッセージを作成する（UTF-8エンコーディング）
-  - _Requirements: 3.3, 3.4_
+**参考コード:**
+- `SophisticatedBackpacks/src/main/java/net/p3pp3rf1y/sophisticatedbackpacks/upgrades/everlasting/EverlastingUpgradeItem.java:14-25`
 
-- [ ] 10. tick()メソッドで全コンポーネントを統合する
-- [ ] 10.1 スロット変更検出からサルベージ実行までの統合
-  - スロット変更を検出する
-  - 候補リストを作成する
-  - MasIntegrationBridgeで判定する
-  - サルベージを実行する
-  - 素材をルーティングする
-  - フィードバックを発行する
-  - キャッシュを更新する
-  - _Requirements: 1.1, 2.1, 3.3_
+**要件:** 3.1
+**見積時間:** 1時間
 
-- [ ] 10.2 例外処理を実装する
-  - MAS API呼び出しの例外をキャッチする
-  - ログ出力する（ERROR/WARNレベル）
-  - プレイヤーにエラーメッセージを送信する（必要に応じて）
-  - スタックトレースをログに記録する
-  - _Requirements: すべての要件の堅牢性向上_
+---
 
-- [ ] 11. 言語ファイルとリソースを整備する
-- [ ] 11.1 英語言語ファイルを作成する
-  - `src/main/resources/assets/sophisticatedmas/lang/en_us.json`を作成する
-  - アップグレード名: `"item.sophisticatedmas.auto_salvage_upgrade": "Auto Salvage Upgrade"`
-  - 成功メッセージ、失敗メッセージのキーと値を定義する
-  - UTF-8エンコーディングで保存する
-  - _Requirements: 3.3, 3.4_
+### Phase 2: AutoSalvageUpgradeWrapperとInventoryラッピング
 
-- [ ] 11.2 日本語言語ファイルを作成する
-  - `src/main/resources/assets/sophisticatedmas/lang/ja_jp.json`を作成する
-  - アップグレード名: `"item.sophisticatedmas.auto_salvage_upgrade": "自動サルベージアップグレード"`
-  - 成功メッセージ、失敗メッセージを日本語で定義する
-  - UTF-8エンコーディングで保存する
-  - _Requirements: 3.3, 3.4_
+#### Task 2.1: AutoSalvageUpgradeWrapperの基本構造を作成する
+**作業内容:**
+- `AutoSalvageUpgradeWrapper.kt`を作成
+  ```kotlin
+  class AutoSalvageUpgradeWrapper(
+      storageWrapper: IStorageWrapper,
+      upgrade: ItemStack,
+      upgradeSaveHandler: Consumer<ItemStack>
+  ) : UpgradeWrapperBase<AutoSalvageUpgradeWrapper, AutoSalvageUpgradeItem>(
+      storageWrapper,
+      upgrade,
+      upgradeSaveHandler
+  ), IInventoryWrapperUpgrade {
 
-- [ ] 11.3 アイテムテクスチャを作成する（オプション）
-  - 16x16 PNGテクスチャを作成する
-  - `src/main/resources/assets/sophisticatedmas/textures/item/auto_salvage_upgrade.png`に配置する
-  - アイテムモデルJSONを作成する（必要に応じて）
-  - _Requirements: 視覚的なユーザー体験向上_
+      private var wrappedInventory: ITrackedContentsItemHandler? = null
 
-- [ ] 12. 統合テストと動作検証を行う
-- [ ] 12.1 ビルドとMODロードを検証する
-  - `gradlew build`が成功することを確認する
-  - 生成されたJARファイルを確認する
-  - `gradlew runClient`でMODが正常にロードされることを確認する
-  - ログに初期化エラーがないことを確認する
-  - _Requirements: ビルド成功とMODロード保証_
+      override fun wrapInventory(inventory: ITrackedContentsItemHandler): ITrackedContentsItemHandler {
+          if (wrappedInventory == null) {
+              wrappedInventory = SalvagingInventoryHandler(inventory, this)
+          }
+          return wrappedInventory!!
+      }
+  }
+  ```
 
-- [ ] 12.2 基本機能の動作確認
-  - クリエイティブインベントリでアップグレードアイテムを確認する
-  - バックパックにアップグレードを装着する
-  - MASギアを投入してサルベージが発動することを確認する
-  - サルベージ結果がバックパックに格納されることを確認する
-  - _Requirements: 1.1, 2.2_
+**使用API:**
+- `net.p3pp3rf1y.sophisticatedcore.upgrades.UpgradeWrapperBase<W, I>`
+- `net.p3pp3rf1y.sophisticatedcore.upgrades.IInventoryWrapperUpgrade`
+  - `ITrackedContentsItemHandler wrapInventory(ITrackedContentsItemHandler)`
 
-- [ ] 12.3 プレイヤー設定との連携を確認する
-  - MASのサルベージ設定画面でレアリティフィルターを設定する
-  - タイプ別フィルター（武器/防具/その他）を設定する
-  - 設定が正しく尊重されることを確認する
-  - エンチャント済みアイテムがサルベージされないことを確認する
-  - _Requirements: 1.2, 1.3, 1.4_
+**参考コード:**
+- `SophisticatedBackpacks/src/main/java/net/p3pp3rf1y/sophisticatedbackpacks/backpack/wrapper/InventoryModificationHandler.java:14-33`
+  - `IInventoryWrapperUpgrade`を実装したアップグレードが`wrapInventory()`でハンドラーをラップする
 
-- [ ] 12.4 素材格納とフォールバックを検証する
-  - バックパックに空きがある状態で素材格納を確認する
-  - バックパックが満杯の状態でプレイヤーインベントリへの転送を確認する
-  - 両方満杯の状態でワールドドロップを確認する
-  - 各フォールバック時の通知が表示されることを確認する
-  - _Requirements: 2.2, 2.3, 2.4, 3.4_
+**要件:** 1.1, 3.1
+**見積時間:** 1.5時間
 
-- [ ] 12.5 経験値付与とフィードバックを検証する
-  - サルベージ時にMAS経験値が付与されることを確認する（`/mns player_info`コマンドで確認）
-  - サルベージ成功時のサウンドが再生されることを確認する
-  - サルベージ失敗時のメッセージが表示されることを確認する
-  - アップグレード取り外し時に処理が停止することを確認する
-  - _Requirements: 2.5, 3.1, 3.3, 3.4_
+---
 
-- [ ] 13. パフォーマンス最適化を検証する
-- [ ] 13.1 Tick処理の最適化を確認する
-  - 10tick間隔のクールダウンが正しく動作することを確認する
-  - スロット変更がない場合は処理をスキップすることを確認する
-  - 大量アイテム投入時の処理時間を計測する（F3デバッグ画面でTPS確認）
-  - 必要に応じてバッチ分割を実装する（1tick当たり最大処理数を制限）
-  - _Requirements: パフォーマンス要件_
+#### Task 2.2: SalvagingInventoryHandlerクラスを実装する
+**作業内容:**
+- `SalvagingInventoryHandler.kt`を作成
+  ```kotlin
+  class SalvagingInventoryHandler(
+      private val wrappedHandler: ITrackedContentsItemHandler,
+      private val wrapper: AutoSalvageUpgradeWrapper
+  ) : ITrackedContentsItemHandler by wrappedHandler {
 
-- [ ] 13.2 ログ出力を最適化する
-  - TRACE: スロット変更検出、処理候補数
-  - DEBUG: サルベージ判定結果
-  - INFO: サルベージ成功件数、素材格納結果
-  - WARN: 失敗理由、例外
-  - ERROR: クリティカルエラー
-  - _Requirements: 保守性とデバッグ効率向上_
+      override fun insertItem(slot: Int, stack: ItemStack, simulate: Boolean): ItemStack {
+          // まず通常の挿入を試行
+          val remaining = wrappedHandler.insertItem(slot, stack, simulate)
 
-- [ ] 14. 最終検証とクリーンアップを実行する
-- [ ] 14.1 全要件の充足を確認する
-  - Requirement 1（ギア検出と条件評価）の全Acceptance Criteriaを検証する
-  - Requirement 2（サルベージ処理と成果物管理）の全Acceptance Criteriaを検証する
-  - Requirement 3（有効化とプレイヤーフィードバック）の全Acceptance Criteriaを検証する
-  - 各要件に対するトレーサビリティを確認する
-  - _Requirements: 1.1, 1.2, 1.3, 1.4, 2.1, 2.2, 2.3, 2.4, 2.5, 3.1, 3.2, 3.3, 3.4_
+          // 挿入成功（一部または全部）の場合、サルベージ判定
+          if (!simulate && remaining.count < stack.count) {
+              val inserted = stack.copy()
+              inserted.count = stack.count - remaining.count
+              wrapper.onItemInserted(slot, inserted)
+          }
 
-- [ ] 14.2 コード品質を確認する
-  - Kotlinコーディング規約に準拠しているか確認する
-  - UTF-8エンコーディングで保存されているか確認する
-  - インポート順序が正しいか確認する（Kotlin標準 → Java標準 → Forge → 外部ライブラリ → 内部パッケージ）
-  - 未使用のインポートやコードを削除する
-  - 適切なアクセス修飾子が使用されているか確認する
-  - _Requirements: コード品質保証_
+          return remaining
+      }
 
-- [ ] 14.3 ドキュメンテーションを整備する
-  - 各クラスの役割をKDocコメントで記述する
-  - 複雑なロジックにインラインコメントを追加する
-  - README.mdに機能説明と使用方法を記載する（必要に応じて）
-  - _Requirements: 保守性向上_
+      override fun insertItem(stack: ItemStack, simulate: Boolean): ItemStack {
+          // スロットなし版は適切なスロットを見つけて上記を呼ぶ
+          val remaining = wrappedHandler.insertItem(stack, simulate)
+          // ... 同様の処理
+          return remaining
+      }
+  }
+  ```
+
+**使用API:**
+- `net.p3pp3rf1y.sophisticatedcore.inventory.ITrackedContentsItemHandler`
+  - `ItemStack insertItem(int slot, ItemStack stack, boolean simulate)`
+  - `ItemStack insertItem(ItemStack stack, boolean simulate)`
+- Kotlinの委譲パターン: `by wrappedHandler`
+
+**参考コード:**
+- `SophisticatedBackpacks/src/main/java/net/p3pp3rf1y/sophisticatedbackpacks/upgrades/inception/InceptionInventoryHandler.java:55-65`
+  - `insertItem()`のオーバーライド例
+
+**要件:** 1.1, 2.1
+**見積時間:** 2時間
+
+---
+
+### Phase 3: Mine and Slash統合コンポーネント
+
+#### Task 3.1: MasIntegrationBridgeオブジェクトを作成する
+**作業内容:**
+- `MasIntegrationBridge.kt`を作成
+  ```kotlin
+  object MasIntegrationBridge {
+      /**
+       * ISalvagableをロード
+       * Location: Mine-And-Slash-Rework/.../ISalvagable.java:29-38
+       */
+      fun loadSalvagable(stack: ItemStack): ISalvagable? {
+          return try {
+              ISalvagable.load(stack)
+          } catch (e: Exception) {
+              null
+          }
+      }
+
+      /**
+       * ICommonDataItemをロード
+       */
+      fun loadCommonData(stack: ItemStack): ICommonDataItem<*>? {
+          return try {
+              ICommonDataItem.load(stack)
+          } catch (e: Exception) {
+              null
+          }
+      }
+
+      /**
+       * ExileStackを作成
+       */
+      fun createExileStack(stack: ItemStack): ExileStack {
+          return ExileStack.of(stack)
+      }
+  }
+  ```
+
+**使用API:**
+- `com.robertx22.mine_and_slash.uncommon.interfaces.data_items.ISalvagable.load(ItemStack)`
+- `com.robertx22.mine_and_slash.uncommon.interfaces.data_items.ICommonDataItem.load(ItemStack)`
+- `com.robertx22.mine_and_slash.uncommon.utilityclasses.stack.ExileStack.of(ItemStack)`
+
+**参考コード:**
+- `Mine-And-Slash-Rework/src/main/java/com/robertx22/mine_and_slash/uncommon/interfaces/data_items/ISalvagable.java:29-38`
+
+**要件:** 1.1, 1.2, 1.3, 1.4, 2.5
+**見積時間:** 1時間
+
+---
+
+#### Task 3.2: SalvageDeciderクラスを実装する
+**作業内容:**
+- `SalvageDecider.kt`を作成
+  ```kotlin
+  class SalvageDecider(private val player: Player) {
+
+      /**
+       * サルベージすべきかどうかを判定
+       * Reference: PlayerConfigData.AutoSalvage.trySalvageOnPickup():92-119
+       */
+      fun shouldSalvage(stack: ItemStack): Boolean {
+          // エンチャント済みアイテムは自動サルベージしない
+          if (stack.isEnchanted) return false
+
+          val exileStack = MasIntegrationBridge.createExileStack(stack)
+          val commonData = MasIntegrationBridge.loadCommonData(stack) ?: return false
+          val salvagable = MasIntegrationBridge.loadSalvagable(stack) ?: return false
+
+          // サルベージ可能性チェック
+          if (!salvagable.isSalvagable(exileStack)) return false
+
+          // プレイヤー設定をチェック
+          val playerConfig = Load.player(player).config.salvage
+
+          // タイプ別設定チェック（優先）
+          val typeSalvageEnabled = playerConfig.checkTypeSalvageConfig(
+              commonData.salvageType,
+              commonData.salvageConfigurationId
+          )
+
+          if (typeSalvageEnabled.isPresent) {
+              return typeSalvageEnabled.get()
+          }
+
+          // レアリティ別設定チェック（フォールバック）
+          return playerConfig.checkRaritySalvageConfig(
+              commonData.salvageType,
+              commonData.rarityId
+          )
+      }
+  }
+  ```
+
+**使用API:**
+- `ItemStack.isEnchanted`
+- `ISalvagable.isSalvagable(ExileStack)`
+- `ICommonDataItem.getSalvageType()` → `ToggleAutoSalvageRarity.SalvageType`
+- `ICommonDataItem.getSalvageConfigurationId()` → `String`
+- `ICommonDataItem.getRarityId()` → `String`
+- `com.robertx22.mine_and_slash.uncommon.datasaving.Load.player(Player)` → `ExiledPlayerData`
+- `ExiledPlayerData.config.salvage` → `PlayerConfigData.AutoSalvage`
+- `PlayerConfigData.AutoSalvage.checkTypeSalvageConfig(SalvageType, String)` → `Optional<Boolean>`
+- `PlayerConfigData.AutoSalvage.checkRaritySalvageConfig(SalvageType, String)` → `boolean`
+
+**参考コード:**
+- `Mine-And-Slash-Rework/src/main/java/com/robertx22/mine_and_slash/capability/player/data/PlayerConfigData.java:92-119`
+
+**要件:** 1.2, 1.3, 1.4
+**見積時間:** 2時間
+
+---
+
+#### Task 3.3: SalvageExecutorクラスを実装する
+**作業内容:**
+- `SalvageExecutor.kt`を作成
+  ```kotlin
+  class SalvageExecutor(private val player: Player) {
+
+      /**
+       * サルベージを実行して結果を返す
+       */
+      fun executeSalvage(stack: ItemStack): SalvageResult {
+          val exileStack = MasIntegrationBridge.createExileStack(stack)
+          val salvagable = MasIntegrationBridge.loadSalvagable(stack)
+              ?: return SalvageResult.failure("Not salvagable")
+          val commonData = MasIntegrationBridge.loadCommonData(stack)
+              ?: return SalvageResult.failure("No common data")
+
+          try {
+              // サルベージ結果を取得
+              val results = salvagable.getSalvageResult(exileStack)
+
+              // 経験値を付与
+              grantSalvageExperience(commonData)
+
+              // 元のアイテムを削除
+              stack.shrink(1)
+
+              return SalvageResult.success(results)
+          } catch (e: Exception) {
+              return SalvageResult.failure("Salvage failed: ${e.message}")
+          }
+      }
+
+      /**
+       * サルベージ経験値を付与
+       * Reference: PlayerConfigData.AutoSalvage.trySalvageOnPickup():125-129
+       */
+      private fun grantSalvageExperience(commonData: ICommonDataItem<*>) {
+          val salvagingProfession = ExileDB.Professions().get("salvaging")
+          if (salvagingProfession != null) {
+              // 最後の引数falseはrested exp bonusを適用しないことを意味する
+              Load.player(player).professions.addExp(
+                  player,
+                  salvagingProfession.GUID(),
+                  commonData.autoSalvageExpReward,
+                  false
+              )
+          }
+      }
+  }
+
+  sealed class SalvageResult {
+      data class Success(val results: List<ItemStack>) : SalvageResult()
+      data class Failure(val reason: String) : SalvageResult()
+
+      companion object {
+          fun success(results: List<ItemStack>) = Success(results)
+          fun failure(reason: String) = Failure(reason)
+      }
+  }
+  ```
+
+**使用API:**
+- `ISalvagable.getSalvageResult(ExileStack)` → `List<ItemStack>`
+- `ICommonDataItem.getAutoSalvageExpReward()` → `int`
+- `com.robertx22.mine_and_slash.database.registrators.ExileDB.Professions()` → `DatabaseRegistry<Profession>`
+- `DatabaseRegistry.get(String)` → `Profession`
+- `Profession.GUID()` → `String`
+- `ExiledPlayerData.professions.addExp(Player, String, int, boolean)`
+
+**参考コード:**
+- `Mine-And-Slash-Rework/src/main/java/com/robertx22/mine_and_slash/capability/player/data/PlayerConfigData.java:125-129`
+
+**要件:** 2.1, 2.5
+**見積時間:** 2時間
+
+---
+
+### Phase 4: 素材ルーティングとフィードバック
+
+#### Task 4.1: ResultRoutingStrategyクラスを実装する
+**作業内容:**
+- `ResultRoutingStrategy.kt`を作成
+  ```kotlin
+  class ResultRoutingStrategy(
+      private val inventory: ITrackedContentsItemHandler,
+      private val player: Player
+  ) {
+
+      /**
+       * サルベージ結果をルーティング
+       * Reference: PlayerConfigData.AutoSalvage.trySalvageOnPickup():131-134
+       */
+      fun routeResults(results: List<ItemStack>): RoutingStatistics {
+          val stats = RoutingStatistics()
+
+          results.forEach { result ->
+              when {
+                  // 1. バックパックに格納を試行
+                  tryInsertToBackpack(result) -> {
+                      stats.toBackpack++
+                  }
+                  // 2. バックパックが満杯ならMASバックパックシステムを試行
+                  tryInsertToMasBackpacks(result) -> {
+                      stats.toMasBackpack++
+                  }
+                  // 3. それでも失敗ならプレイヤーインベントリへ
+                  tryGiveToPlayer(result) -> {
+                      stats.toPlayerInventory++
+                  }
+                  // 4. 全て失敗ならワールドドロップ
+                  else -> {
+                      dropInWorld(result)
+                      stats.droppedInWorld++
+                  }
+              }
+          }
+
+          return stats
+      }
+
+      private fun tryInsertToBackpack(stack: ItemStack): Boolean {
+          val remaining = inventory.insertItem(stack, false)
+          return remaining.isEmpty
+      }
+
+      /**
+       * MASのバックパックシステムに格納を試行
+       * Reference: PlayerConfigData.AutoSalvage.trySalvageOnPickup():131-133
+       */
+      private fun tryInsertToMasBackpacks(stack: ItemStack): Boolean {
+          val backpacks = Load.backpacks(player).backpacks
+          return backpacks.tryAutoPickup(player, stack, false)
+      }
+
+      private fun tryGiveToPlayer(stack: ItemStack): Boolean {
+          return PlayerUtils.giveItem(stack, player)
+      }
+
+      private fun dropInWorld(stack: ItemStack) {
+          val itemEntity = ItemEntity(
+              player.level(),
+              player.x,
+              player.y + 0.5,
+              player.z,
+              stack
+          )
+          itemEntity.setDefaultPickUpDelay()
+          player.level().addFreshEntity(itemEntity)
+      }
+  }
+
+  data class RoutingStatistics(
+      var toBackpack: Int = 0,
+      var toMasBackpack: Int = 0,
+      var toPlayerInventory: Int = 0,
+      var droppedInWorld: Int = 0
+  )
+  ```
+
+**使用API:**
+- `ITrackedContentsItemHandler.insertItem(ItemStack, boolean)` → `ItemStack`
+- `com.robertx22.mine_and_slash.uncommon.datasaving.Load.backpacks(Player)` → `BackpacksCap`
+- `BackpacksCap.getBackpacks()` → `Backpacks`
+- `Backpacks.tryAutoPickup(Player, ItemStack, boolean)` → `boolean`
+- `com.robertx22.mine_and_slash.uncommon.utilityclasses.PlayerUtils.giveItem(ItemStack, Player)` → `boolean`
+- `net.minecraft.world.entity.item.ItemEntity`
+
+**参考コード:**
+- `Mine-And-Slash-Rework/src/main/java/com/robertx22/mine_and_slash/capability/player/data/PlayerConfigData.java:131-134`
+- `Mine-And-Slash-Rework/src/main/java/com/robertx22/mine_and_slash/capability/player/data/Backpacks.java:97-125`
+
+**要件:** 2.2, 2.3, 2.4
+**見積時間:** 2.5時間
+
+---
+
+#### Task 4.2: FeedbackEmitterオブジェクトを実装する
+**作業内容:**
+- `FeedbackEmitter.kt`を作成
+  ```kotlin
+  object FeedbackEmitter {
+
+      /**
+       * サルベージ成功時のフィードバック
+       * Reference: PlayerConfigData.AutoSalvage.trySalvageOnPickup():123
+       */
+      fun emitSuccessFeedback(player: Player, itemName: Component, stats: RoutingStatistics) {
+          // サウンド再生（サーバー側のみ）
+          if (!player.level().isClientSide) {
+              SoundUtils.playSound(player, SoundEvents.EXPERIENCE_ORB_PICKUP, 0.75F, 1.25F)
+          }
+
+          // 詳細メッセージ（オプション）
+          if (stats.droppedInWorld > 0) {
+              player.displayClientMessage(
+                  Component.translatable("message.sophisticatedmas.salvage.overflow", itemName),
+                  true
+              )
+          }
+      }
+
+      /**
+       * サルベージ失敗時のフィードバック
+       */
+      fun emitFailureFeedback(player: Player, reason: String) {
+          // 失敗理由をログに記録
+          SophisticatedMASMod.LOGGER.warn("Salvage failed for player ${player.name.string}: $reason")
+      }
+  }
+  ```
+
+**使用API:**
+- `com.robertx22.library_of_exile.utils.SoundUtils.playSound(Player, SoundEvent, float, float)`
+- `net.minecraft.sounds.SoundEvents.EXPERIENCE_ORB_PICKUP`
+- `Player.displayClientMessage(Component, boolean)`
+- `Component.translatable(String, Object...)`
+
+**参考コード:**
+- `Mine-And-Slash-Rework/src/main/java/com/robertx22/mine_and_slash/capability/player/data/PlayerConfigData.java:123`
+
+**要件:** 3.3, 3.4
+**見積時間:** 1時間
+
+---
+
+### Phase 5: onItemInserted統合メソッド
+
+#### Task 5.1: AutoSalvageUpgradeWrapperにonItemInserted()を実装する
+**作業内容:**
+- `AutoSalvageUpgradeWrapper.kt`に追加
+  ```kotlin
+  fun onItemInserted(slot: Int, stack: ItemStack) {
+      val player = storageWrapper.player ?: return
+
+      try {
+          // 判定
+          val decider = SalvageDecider(player)
+          if (!decider.shouldSalvage(stack)) return
+
+          // 実行
+          val executor = SalvageExecutor(player)
+          val result = executor.executeSalvage(stack)
+
+          when (result) {
+              is SalvageResult.Success -> {
+                  // ルーティング
+                  val router = ResultRoutingStrategy(
+                      storageWrapper.inventoryForUpgradeProcessing,
+                      player
+                  )
+                  val stats = router.routeResults(result.results)
+
+                  // フィードバック
+                  FeedbackEmitter.emitSuccessFeedback(player, stack.hoverName, stats)
+              }
+              is SalvageResult.Failure -> {
+                  FeedbackEmitter.emitFailureFeedback(player, result.reason)
+              }
+          }
+      } catch (e: Exception) {
+          SophisticatedMASMod.LOGGER.error("Error processing auto salvage for slot $slot", e)
+          FeedbackEmitter.emitFailureFeedback(player, "Exception: ${e.message}")
+      }
+  }
+  ```
+
+**使用API:**
+- `IStorageWrapper.getPlayer()` → `Player?`
+- `IStorageWrapper.getInventoryForUpgradeProcessing()` → `ITrackedContentsItemHandler`
+
+**要件:** 1.1, 2.1, 3.3
+**見積時間:** 1.5時間
+
+---
+
+### Phase 6: リソースとデータ生成
+
+#### Task 6.1: Registrateによる言語ファイル自動生成を確認する
+**作業内容:**
+- Task 1.2で既に`.lang()`メソッドで設定済み
+- Registrateが自動的に言語ファイルを生成する
+- 手動で言語ファイルを編集する場合:
+  - `src/main/resources/assets/sophisticatedmas/lang/en_us.json`
+  - `src/main/resources/assets/sophisticatedmas/lang/ja_jp.json`
+- **重要:** UTF-8エンコーディングで保存する
+
+**Registrateの自動生成内容:**
+```json
+{
+  "item.sophisticatedmas.auto_salvage_upgrade": "Auto Salvage Upgrade"
+}
+```
+
+**追加メッセージ（手動追加）:**
+```json
+{
+  "message.sophisticatedmas.salvage.overflow": "Salvaged %s (some items dropped due to full inventory)"
+}
+```
+
+**要件:** 3.3, 3.4
+**見積時間:** 30分
+
+---
+
+#### Task 6.2: データ生成を実行する
+**作業内容:**
+- `./gradlew runData`を実行してRegistrateのデータ生成を実行
+- 自動生成されるファイル:
+  - アイテムモデル（`src/generated/resources/assets/sophisticatedmas/models/item/auto_salvage_upgrade.json`）
+  - 言語ファイル（英語）
+  - アイテムタグ（必要に応じて）
+- 生成されたファイルを確認
+
+**参考:**
+- Registrateは`.defaultModel()`と`.defaultLang()`で自動的にデータを生成
+
+**要件:** 自動データ生成
+**見積時間:** 15分
+
+---
+
+### Phase 7: テストと検証
+
+#### Task 7.1: ビルドとMODロードを検証する
+**作業内容:**
+- `./gradlew build`を実行してビルド成功を確認
+- `./gradlew runClient`でクライアント起動を確認
+- ログで以下を確認:
+  - Registrateが正常に初期化されている
+  - アイテムが登録されている
+  - エラーがない
+
+**要件:** ビルド成功とMODロード保証
+**見積時間:** 30分
+
+---
+
+#### Task 7.2: 基本機能の動作確認
+**作業内容:**
+1. クリエイティブインベントリでアップグレードアイテムを確認
+2. バックパックを入手してアップグレードを装着
+3. MASギア（Common、Rare等）をバックパックに投入
+4. サルベージが自動的に発動することを確認
+5. サルベージ結果（素材）がバックパックに格納されることを確認
+6. サウンドが再生されることを確認
+
+**要件:** 1.1, 2.2, 3.3
+**見積時間:** 1時間
+
+---
+
+#### Task 7.3: プレイヤー設定との連携を確認
+**作業内容:**
+1. MASのサルベージ設定画面を開く（`/mns player_config`）
+2. レアリティフィルターを設定（例: Common ONのみ）
+3. バックパックにCommonギアを投入 → サルベージされる
+4. バックパックにRareギアを投入 → サルベージされない
+5. タイプ別フィルター（武器/防具）を設定して動作確認
+6. エンチャント済みギアが自動サルベージされないことを確認
+
+**要件:** 1.2, 1.3, 1.4
+**見積時間:** 1.5時間
+
+---
+
+#### Task 7.4: 素材格納のフォールバック検証
+**作業内容:**
+1. バックパックに空きがある状態:
+   - サルベージ → バックパックに格納される
+2. バックパックが満杯:
+   - サルベージ → MASバックパックまたはプレイヤーインベントリに転送される
+3. 両方満杯:
+   - サルベージ → ワールドにドロップされる
+   - オーバーフローメッセージが表示される
+
+**要件:** 2.2, 2.3, 2.4, 3.4
+**見積時間:** 1時間
+
+---
+
+#### Task 7.5: 経験値付与の検証
+**作業内容:**
+1. `/mns player_info`コマンドでプレイヤー情報を確認
+2. 現在のSalvaging職業経験値を記録
+3. バックパックでギアをサルベージ
+4. 再度`/mns player_info`で経験値が増加していることを確認
+5. 経験値量が`getAutoSalvageExpReward()`に基づいて正しいことを確認
+
+**要件:** 2.5
+**見積時間:** 30分
+
+---
+
+#### Task 7.6: パフォーマンス検証
+**作業内容:**
+1. F3デバッグ画面でTPS（Ticks Per Second）を確認
+2. 大量のギア（64個）を一度にバックパックに投入
+3. TPS低下がないことを確認
+4. アイテム挿入時の即座処理が正しく動作することを確認
+5. ログにTRACE/DEBUGレベルで処理情報が出力されることを確認
+
+**要件:** パフォーマンス要件
+**見積時間:** 30分
+
+---
+
+### Phase 8: 最終検証とクリーンアップ
+
+#### Task 8.1: 全要件の充足確認
+**作業内容:**
+- Requirement 1の全Acceptance Criteriaを検証
+  - 1.1: ギア検出が正しく動作
+  - 1.2: プレイヤー設定が尊重される
+  - 1.3: エンチャント済みアイテムが除外される
+  - 1.4: タイプ別フィルターが動作
+- Requirement 2の全Acceptance Criteriaを検証
+  - 2.1: サルベージ結果が正しい
+  - 2.2: バックパック格納が優先される
+  - 2.3: フォールバックが動作
+  - 2.4: ワールドドロップが最後の手段
+  - 2.5: 経験値が正しく付与される
+- Requirement 3の全Acceptance Criteriaを検証
+  - 3.1: アップグレードの装着/取り外しが動作
+  - 3.2: NBT永続化が動作（※今回はstateless実装のため該当なし）
+  - 3.3: サウンドフィードバックが再生
+  - 3.4: 通知メッセージが表示
+
+**要件:** 1.1, 1.2, 1.3, 1.4, 2.1, 2.2, 2.3, 2.4, 2.5, 3.1, 3.3, 3.4
+**見積時間:** 1時間
+
+---
+
+#### Task 8.2: コード品質確認
+**作業内容:**
+- Kotlinコーディング規約に準拠しているか確認
+- UTF-8エンコーディングで保存されているか確認
+- インポート順序が正しいか確認
+  - Kotlin標準
+  - Java標準
+  - Forge
+  - Mine and Slash
+  - Sophisticated Backpacks
+  - 内部パッケージ
+- 未使用のインポートやコードを削除
+- 適切なアクセス修飾子（private/internal/public）の使用
+
+**要件:** コード品質保証
+**見積時間:** 30分
+
+---
+
+## 実装上の重要な注意点
+
+### アイテム挿入イベントベースの利点
+1. **効率性**: tick処理（0.5秒ごとのポーリング）ではなく、アイテム挿入時に即座に処理
+2. **正確性**: スロット変更キャッシュが不要、挿入されたアイテムを直接処理
+3. **シンプル**: ステートレスな実装、NBT永続化が不要
+
+### IInventoryWrapperUpgradeの動作原理
+1. `InventoryModificationHandler`が全ての`IInventoryWrapperUpgrade`を取得
+2. 各アップグレードの`wrapInventory()`を順次呼び出してハンドラーをラップ
+3. 最終的なラップされたハンドラーが`getInventoryForUpgradeProcessing()`から返される
+4. アイテム挿入時に`insertItem()`が呼ばれ、ラップされたハンドラーが処理
+
+**参考コード:**
+- `SophisticatedBackpacks/src/main/java/net/p3pp3rf1y/sophisticatedbackpacks/backpack/wrapper/InventoryModificationHandler.java:24-33`
+
+### Mine and Slash API使用パターン
+1. **ExileStackの使用**: MAS APIは`ItemStack`ではなく`ExileStack`を使用
+2. **Load.player()**: プレイヤーのMASデータにアクセスするための標準的な方法
+3. **ExileDB**: データベースアクセスのための中央ハブ
+4. **経験値報酬**: `getAutoSalvageExpReward()`は通常の`getSalvageExpReward()`よりも低い値を返す
+
+### Registrateの利点
+1. **自動データ生成**: モデル、言語ファイル、レシピなどを自動生成
+2. **簡潔なAPI**: Fluent APIで登録コードが読みやすい
+3. **型安全**: `ItemEntry<T>`で型安全なアクセス
+4. **イベントバス自動登録**: `Registrate.create()`が自動的にイベントリスナーを登録
+
+---
 
 ## Requirements Coverage Summary
 
 ### Requirement 1: ギア検出と条件評価
-- **1.1**: タスク 4.1, 4.3, 5.1, 5.2, 6.1, 6.3, 7.1, 10.1, 12.2, 14.1
-- **1.2**: タスク 6.1, 6.2, 7.1, 12.3, 14.1
-- **1.3**: タスク 6.1, 6.2, 7.1, 12.3, 14.1
-- **1.4**: タスク 6.1, 6.2, 7.1, 12.3, 14.1
+- **1.1**: Task 2.1, 2.2, 3.1, 3.3, 5.1, 7.2, 8.1
+- **1.2**: Task 3.1, 3.2, 5.1, 7.3, 8.1
+- **1.3**: Task 3.1, 3.2, 5.1, 7.3, 8.1
+- **1.4**: Task 3.1, 3.2, 5.1, 7.3, 8.1
 
 ### Requirement 2: サルベージ処理と成果物管理
-- **2.1**: タスク 4.3, 5.2, 6.1, 6.3, 7.1, 7.2, 10.1, 14.1
-- **2.2**: タスク 8.1, 8.2, 12.2, 12.4, 14.1
-- **2.3**: タスク 8.1, 8.2, 12.4, 14.1
-- **2.4**: タスク 8.1, 8.2, 12.4, 14.1
-- **2.5**: タスク 6.4, 7.2, 12.5, 14.1
+- **2.1**: Task 2.2, 3.3, 5.1, 8.1
+- **2.2**: Task 4.1, 7.2, 7.4, 8.1
+- **2.3**: Task 4.1, 7.4, 8.1
+- **2.4**: Task 4.1, 7.4, 8.1
+- **2.5**: Task 3.3, 7.5, 8.1
 
 ### Requirement 3: 有効化とプレイヤーフィードバック
-- **3.1**: タスク 3.1, 3.2, 4.1, 4.2, 12.5, 14.1
-- **3.2**: タスク 4.1, 4.2, 14.1
-- **3.3**: タスク 9.1, 9.2, 10.1, 11.1, 11.2, 12.5, 14.1
-- **3.4**: タスク 9.1, 9.2, 11.1, 11.2, 12.4, 12.5, 14.1
+- **3.1**: Task 1.3, 2.1, 8.1
+- **3.2**: ※今回はstateless実装のため該当なし
+- **3.3**: Task 4.2, 5.1, 6.1, 7.2, 8.1
+- **3.4**: Task 4.2, 6.1, 7.4, 8.1
 
-## 実装上の重要な注意点
-
-### DeferredRegister vs Registrate
-- **実装パターン**: Sophisticated Backpacksの実際のコードベースは`DeferredRegister`を使用しています
-- **理由**: build.gradle.ktsにRegistrateが追加されましたが、Sophisticated Backpacksとの互換性のため、DeferredRegisterパターンに従うことを推奨します
-- **代替案**: Registrateを使用する場合は、UpgradeTypeの登録とUpgradeContainerRegistryへの登録が正しく動作することを確認する必要があります
-
-### Mine and Slash API使用パターン
-1. **ExileStackの使用**: MAS APIは`ItemStack`ではなく`ExileStack`を使用します
-2. **Load.player()**: プレイヤーのMASデータにアクセスするための標準的な方法
-3. **ExileDB**: データベースアクセスのための中央ハブ
-4. **経験値報酬**: `getAutoSalvageExpReward()`は通常の`getSalvageExpReward()`の1/10の値を返します
-
-### Tick処理の最適化
-- **間隔**: 10tick（0.5秒）ごとに処理
-- **変更検出**: スロット状態キャッシュとの比較で変更されたスロットのみ処理
-- **サーバー側のみ**: `level.isClientSide`チェックで確実にサーバー側のみで実行
-
-### NBT永続化のキープレフィックス
-- **プレフィックス**: `smas_`を使用して他のアップグレードとの衝突を回避
-- **例**: `smas_cache`, `smas_tick_counter`
+---
 
 ## Task Size Estimates
-- **Major Task 1-3**: 2-3時間（基盤・アイテム登録）
-- **Major Task 4-7**: 6-8時間（Wrapper・MAS統合・コアロジック）
-- **Major Task 8-10**: 3-4時間（素材ルーティング・フィードバック・統合）
-- **Major Task 11**: 1-2時間（リソースファイル）
-- **Major Task 12-14**: 3-4時間（テスト・最適化・最終検証）
+- **Phase 1 (基盤)**: 2.5時間
+- **Phase 2 (Wrapper)**: 3.5時間
+- **Phase 3 (MAS統合)**: 5時間
+- **Phase 4 (ルーティング/フィードバック)**: 3.5時間
+- **Phase 5 (統合)**: 1.5時間
+- **Phase 6 (リソース)**: 0.75時間
+- **Phase 7 (テスト)**: 5時間
+- **Phase 8 (最終検証)**: 1.5時間
 
-**合計見積**: 約16-22時間
+**合計見積:** 約23時間

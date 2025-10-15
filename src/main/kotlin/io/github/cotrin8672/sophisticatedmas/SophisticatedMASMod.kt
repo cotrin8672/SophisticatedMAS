@@ -1,5 +1,6 @@
 package io.github.cotrin8672.sophisticatedmas
 
+import com.tterrag.registrate.Registrate
 import io.github.cotrin8672.sophisticatedmas.init.ModIdentity
 import net.minecraftforge.fml.common.Mod
 import org.apache.logging.log4j.LogManager
@@ -19,8 +20,17 @@ object SophisticatedMASMod {
      */
     val LOGGER: Logger = LogManager.getLogger(ModIdentity.LOGGER_NAME)
 
+    /**
+     * Registrateインスタンス
+     * アイテム、ブロック、その他のレジストリオブジェクトの登録を管理します。
+     */
+    val REGISTRATE: Registrate = Registrate.create(ModIdentity.MOD_ID)
+
     init {
         LOGGER.info("${ModIdentity.MOD_NAME} is initializing...")
-        // TODO: 今後、アイテム登録やアップグレード登録をここで行う
+        LOGGER.info("Registrate instance created for MOD ID: ${ModIdentity.MOD_ID}")
+
+        // アイテム登録
+        io.github.cotrin8672.sophisticatedmas.init.ModItems.register()
     }
 }

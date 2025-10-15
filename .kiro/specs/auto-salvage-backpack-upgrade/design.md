@@ -241,6 +241,7 @@ data class ItemStackSnapshot(
 **Preconditions**:
 - `entity`が`Player`インスタンス。
 - `level.isClientSide`が`false`（サーバー側のみ実行）。
+- `entity`が`null`または`Player`以外（バックパックブロック経由など）の場合は後続処理へ進まない。
 
 **Postconditions**:
 - スロット変更があった場合、`AutoSalvageProcessor`が呼ばれ、結果が反映される。
@@ -253,6 +254,7 @@ data class ItemStackSnapshot(
 - Entityが`Player`でない場合 → 即return。
 - Client側Tick → 無視。
 - MAS API例外 → ログ出力と処理スキップ。
+- バックパックブロック設置状態でのサルベージ要求 → `entity`が`Player`でないため即returnし、経験値付与・通知も発生しない（非対応ケースとして許容）。
 
 ---
 
