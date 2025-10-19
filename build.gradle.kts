@@ -93,6 +93,7 @@ repositories {
     maven("https://maven.createmod.net")
     maven("https://modmaven.dev")
     maven("https://api.modrinth.com/maven")
+    maven("https://cursemaven.com")
     maven("https://maven.tterrag.com/")
 }
 
@@ -109,7 +110,13 @@ dependencies {
 
     modImplementation("maven.modrinth:sophisticated-core:1.20.1-1.2.105.1230")
     modImplementation("maven.modrinth:sophisticated-backpacks:1.20.1-3.24.9.1391")
+
     modImplementation("maven.modrinth:mine-and-slash:6.3.7")
+    modImplementation("curse.maven:library-of-exile-398780:7103648")
+    modImplementation("curse.maven:playeranimator-658587:4587214")
+    modImplementation("maven.modrinth:curios:5.14.1+1.20.1")
+    modImplementation("curse.maven:dungeon-realm-1200770:7103646")
+    modImplementation("maven.modrinth:the-harvest:1.1.1")
 
     modImplementation("com.tterrag.registrate:Registrate:MC1.20-1.3.3")
 }
