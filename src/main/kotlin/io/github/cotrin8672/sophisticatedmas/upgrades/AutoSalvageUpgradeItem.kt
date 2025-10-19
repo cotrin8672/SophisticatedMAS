@@ -1,5 +1,6 @@
 package io.github.cotrin8672.sophisticatedmas.upgrades
 
+import net.p3pp3rf1y.sophisticatedbackpacks.Config
 import net.p3pp3rf1y.sophisticatedcore.upgrades.IUpgradeItem.UpgradeConflictDefinition
 import net.p3pp3rf1y.sophisticatedcore.upgrades.UpgradeItemBase
 import net.p3pp3rf1y.sophisticatedcore.upgrades.UpgradeType
@@ -20,7 +21,7 @@ class AutoSalvageUpgradeItem : UpgradeItemBase<AutoSalvageUpgradeWrapper> {
             UpgradeType(::AutoSalvageUpgradeWrapper)
     }
 
-    constructor() : super(net.p3pp3rf1y.sophisticatedbackpacks.Config.SERVER.maxUpgradesPerStorage)
+    constructor() : super(Config.SERVER.maxUpgradesPerStorage)
 
     /**
      * このアップグレードのタイプを返します
