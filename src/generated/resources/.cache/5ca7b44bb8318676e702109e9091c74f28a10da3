@@ -1,5 +1,0 @@
-// 1.20.1	2025-10-19T13:38:51.5337815	Registrate Provider for sophisticatedmas [Recipes, Advancements, Loot Tables, Tags (blocks), Tags (items), Tags (fluids), Tags (entity_types), Blockstates, Item models, Lang (en_us/en_ud)]
-79b312c6fdfab58e74a1f09cfa2f03bbb84626f8 assets/sophisticatedmas/lang/en_ud.json
-9b0e34e5b244ef620cd185f9f8e97c5db0374c7a assets/sophisticatedmas/lang/en_us.json
-d59b5b3ccdf1b6fdeb3754aa9f754a20d565f824 assets/sophisticatedmas/models/item/auto_salvage_upgrade.json
-cad4bdcab2c35bfbbcff1b0397de15d4693afa05 data/sophisticatedbackpacks/tags/items/upgrade.json
