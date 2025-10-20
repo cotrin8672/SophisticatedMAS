@@ -41,7 +41,7 @@ class AutoSalvageUpgradeWrapper(
     private var playerRef: WeakReference<Player?> = WeakReference(null)
 
     override fun wrapInventory(inventory: ITrackedContentsItemHandler): ITrackedContentsItemHandler {
-        return SalvagingInventoryHandler(inventory, storageWrapper)
+        return inventory
     }
 
     override fun onBeforeInsert(
