@@ -3,8 +3,6 @@ package io.github.cotrin8672.sophisticatedmas.upgrades
 import com.robertx22.mine_and_slash.itemstack.ExileStack
 import com.robertx22.mine_and_slash.saveclasses.gearitem.gear_bases.Rarity
 import com.robertx22.mine_and_slash.uncommon.interfaces.data_items.ICommonDataItem
-import net.minecraft.client.Minecraft
-import net.minecraft.network.chat.Component
 import net.minecraft.world.item.ItemStack
 import net.p3pp3rf1y.sophisticatedcore.api.IStorageWrapper
 import net.p3pp3rf1y.sophisticatedcore.inventory.ITrackedContentsItemHandler
@@ -45,7 +43,7 @@ class SalvagingInventoryHandler(
             return wrappedHandler.insertItem(slot, stack, false)
         }
 
-        Minecraft.getInstance().player?.sendSystemMessage(Component.literal("gear item"))
+        // Minecraft.getInstance().player?.sendSystemMessage(Component.literal("gear item"))
 
         // TODO: MASギアかどうかをチェック
         // TODO: サルベージ可能かどうかをチェック

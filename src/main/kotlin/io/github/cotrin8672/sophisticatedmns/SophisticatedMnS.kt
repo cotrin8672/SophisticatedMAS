@@ -16,7 +16,7 @@ import thedarkcolour.kotlinforforge.forge.MOD_BUS
  * 作業台への直接アクセス機能を提供します。
  */
 @Mod(ModIdentity.MOD_ID)
-object SophisticatedMASMod {
+object SophisticatedMnS {
     /**
      * MODロガー
      */

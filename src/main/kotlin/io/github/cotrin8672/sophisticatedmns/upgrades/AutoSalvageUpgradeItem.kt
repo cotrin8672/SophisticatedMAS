@@ -11,7 +11,7 @@ import net.p3pp3rf1y.sophisticatedcore.upgrades.UpgradeType
  * バックパックに装着することで、Mine and Slashのギアアイテムを
  * 自動的にサルベージ（分解）するアップグレード。
  */
-class AutoSalvageUpgradeItem : UpgradeItemBase<AutoSalvageUpgradeWrapper> {
+class AutoSalvageUpgradeItem : UpgradeItemBase<AutoSalvageUpgradeWrapper>(Config.SERVER.maxUpgradesPerStorage) {
     companion object {
         /**
          * アップグレードタイプ
@@ -20,8 +20,6 @@ class AutoSalvageUpgradeItem : UpgradeItemBase<AutoSalvageUpgradeWrapper> {
         val TYPE: UpgradeType<AutoSalvageUpgradeWrapper> =
             UpgradeType(::AutoSalvageUpgradeWrapper)
     }
-
-    constructor() : super(Config.SERVER.maxUpgradesPerStorage)
 
     /**
      * このアップグレードのタイプを返します
