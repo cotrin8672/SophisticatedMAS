@@ -1,29 +1,48 @@
+# SophisticatedMAS
 
-Installation information
-=======
+An addon mod for **Mine and Slash** and **Sophisticated Backpacks** that adds automatic gear salvaging directly in your
+backpack!
 
-This template repository can be directly cloned to get you started with a new
-mod. Simply create a new repository cloned from this one, by following the
-instructions provided by [GitHub](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template).
+## What does this mod do?
 
-Once you have your clone, simply open the repository in the IDE of your choice. The usual recommendation for an IDE is either IntelliJ IDEA or Eclipse.
+This mod adds the **Auto Salvage Upgrade** for Sophisticated Backpacks. When installed in your backpack, it
+automatically salvages Mine and Slash gear items based on your salvage settings - no more manual trips to the salvaging
+station!
 
-If at any point you are missing libraries in your IDE, or you've run into problems you can
-run `gradlew --refresh-dependencies` to refresh the local cache. `gradlew clean` to reset everything 
-{this does not affect your code} and then start the process again.
+## Features
 
-Mapping Names:
-============
-The MDK is configured to use the official mapping names from Mojang for methods and fields 
-in the Minecraft codebase. These names are covered by a specific license. All modders should be aware of this
-license. For the latest license text, refer to the mapping file itself, or the reference copy here:
-https://github.com/NeoForged/NeoForm/blob/main/Mojang.md
+- 🔄 **Automatic Salvaging**: Gear items are automatically salvaged when they enter your backpack
+- ⚙️ **Respects Your Settings**: Uses your Mine and Slash auto-salvage configuration (rarity, type, etc.)
+- 📦 **Convenient Storage**: Salvage materials go straight into your backpack
 
-MDG Legacy:
-==========
-This template uses [ModDevGradle Legacy](https://github.com/neoforged/ModDevGradle). Documentation can be found [here](https://github.com/neoforged/ModDevGradle/blob/main/LEGACY.md).
+## How to Use
 
-Additional Resources: 
-==========
-Community Documentation: https://docs.neoforged.net/  
-NeoForged Discord: https://discord.neoforged.net/
+1. **Craft the Auto Salvage Upgrade**
+    - Check your in-game recipe viewer (JEI/REI) for the recipe
+
+2. **Install it in your backpack**
+    - Open your Sophisticated Backpack
+    - Go to the Upgrades tab
+    - Place the Auto Salvage Upgrade in an upgrade slot
+
+3. **Configure your salvage settings in Mine and Slash**
+    - Set which rarities you want to auto-salvage
+    - Configure gear type filters
+
+4. **Done!**
+    - Gear matching your settings will be automatically salvaged
+    - Materials will appear in your backpack
+
+## Issues & Support
+
+Found a bug or have a suggestion? Please report it on
+our [GitHub Issues](https://github.com/yourusername/SophisticatedMAS/issues) page.
+
+## Credits
+
+Made with ❤️ for the Mine and Slash and Sophisticated Backpacks communities
+
+Special thanks to:
+
+- **P3pp3rF1y** - Creator of Sophisticated Backpacks
+- **RobertX22** - Creator of Mine and Slash

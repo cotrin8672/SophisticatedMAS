@@ -55,7 +55,13 @@ legacyForge {
             data()
 
             programArguments.addAll(
-                "--mod", modId, "--all", "--output", file("src/generated/resources/").absolutePath, "--existing", file("src/main/resources/").absolutePath
+                "--mod",
+                modId,
+                "--all",
+                "--output",
+                file("src/generated/resources/").absolutePath,
+                "--existing",
+                file("src/main/resources/").absolutePath
             )
         }
 
@@ -119,6 +125,7 @@ dependencies {
     modImplementation("maven.modrinth:the-harvest:1.1.1")
 
     modImplementation("com.tterrag.registrate:Registrate:MC1.20-1.3.3")
+    jarJar("com.tterrag.registrate:Registrate:MC1.20-1.3.3")
 }
 
 /*
@@ -140,10 +147,10 @@ publisher {
         modrinth(System.getenv("MODRINTH_API_KEY"))
     }
 
-    curseID.set("")
-    modrinthID.set("")
+    curseID.set("1369188")
+    modrinthID.set("EM6nDwFW")
     versionType.set("release")
-    changelog.set(file("changelog.md"))
+    // changelog.set(file("changelog.md"))
     version.set(project.version.toString())
     displayName.set("$modName $modVersion")
     setGameVersions(mcVersion)
@@ -153,13 +160,11 @@ publisher {
 
     curseDepends {
         required("kotlin-for-forge")
-        required("sophisticated-core")
         required("sophisticated-backpacks")
-        required("mine-and-slash-reloaded")
+        required("mine-and-slash")
     }
     modrinthDepends {
         required("kotlin-for-forge")
-        required("sophisticated-core")
         required("sophisticated-backpacks")
         required("mine-and-slash")
     }
