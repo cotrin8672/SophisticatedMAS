@@ -1,4 +1,4 @@
-package io.github.cotrin8672.sophisticatedmas.upgrades
+package io.github.cotrin8672.sophisticatedmns.upgrades
 
 import net.p3pp3rf1y.sophisticatedbackpacks.Config
 import net.p3pp3rf1y.sophisticatedcore.upgrades.IUpgradeItem.UpgradeConflictDefinition

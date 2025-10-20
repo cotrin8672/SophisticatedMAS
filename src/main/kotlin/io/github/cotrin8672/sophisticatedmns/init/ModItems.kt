@@ -1,8 +1,8 @@
-package io.github.cotrin8672.sophisticatedmas.init
+package io.github.cotrin8672.sophisticatedmns.init
 
 import com.tterrag.registrate.util.entry.ItemEntry
-import io.github.cotrin8672.sophisticatedmas.SophisticatedMnS
-import io.github.cotrin8672.sophisticatedmas.upgrades.AutoSalvageUpgradeItem
+import io.github.cotrin8672.sophisticatedmns.SophisticatedMnS
+import io.github.cotrin8672.sophisticatedmns.upgrades.AutoSalvageUpgradeItem
 import net.p3pp3rf1y.sophisticatedbackpacks.init.ModItems.BACKPACK_UPGRADE_TAG
 import net.p3pp3rf1y.sophisticatedbackpacks.init.ModItems.CREATIVE_TAB
 

@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " S ",
+    "IUI",
+    " R "
+  ],
+  "key": {
+    "S": {
+      "item": "mmorpg:salvaging_station"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "U": {
+      "item": "sophisticatedbackpacks:upgrade_base"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    }
+  },
+  "result": {
+    "item": "sophisticatedmns:auto_salvage_upgrade"
+  }
+}

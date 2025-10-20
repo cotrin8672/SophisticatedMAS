@@ -1,4 +1,4 @@
-package io.github.cotrin8672.sophisticatedmas.registrate
+package io.github.cotrin8672.sophisticatedmns.registrate
 
 import com.tterrag.registrate.AbstractRegistrate
 import net.minecraftforge.eventbus.api.IEventBus

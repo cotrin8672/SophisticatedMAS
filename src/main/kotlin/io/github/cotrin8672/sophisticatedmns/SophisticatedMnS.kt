@@ -1,8 +1,8 @@
-package io.github.cotrin8672.sophisticatedmas
+package io.github.cotrin8672.sophisticatedmns
 
-import io.github.cotrin8672.sophisticatedmas.init.ModIdentity
-import io.github.cotrin8672.sophisticatedmas.init.ModItems
-import io.github.cotrin8672.sophisticatedmas.registrate.KotlinRegistrate
+import io.github.cotrin8672.sophisticatedmns.init.ModIdentity
+import io.github.cotrin8672.sophisticatedmns.init.ModItems
+import io.github.cotrin8672.sophisticatedmns.registrate.KotlinRegistrate
 import net.minecraftforge.fml.common.Mod
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger

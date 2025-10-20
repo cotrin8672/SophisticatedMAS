@@ -1,4 +1,4 @@
-package io.github.cotrin8672.sophisticatedmas.upgrades
+package io.github.cotrin8672.sophisticatedmns.upgrades
 
 import com.robertx22.library_of_exile.utils.SoundUtils
 import com.robertx22.mine_and_slash.database.registry.ExileDB

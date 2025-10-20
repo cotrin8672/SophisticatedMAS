@@ -1,4 +1,4 @@
-package io.github.cotrin8672.sophisticatedmas.init
+package io.github.cotrin8672.sophisticatedmns.init
 
 /**
  * MOD識別子の単一情報源
@@ -17,7 +17,7 @@ object ModIdentity {
      * MOD表示名 - ユーザーに表示される名前
      * gradle.propertiesのmodNameと同一である必要があります
      */
-    const val MOD_NAME: String = "Sophisticated MnS"
+    const val MOD_NAME: String = "Sophisticated M'n'S"
 
     /**
      * ロガー名 - ログ出力の識別に使用

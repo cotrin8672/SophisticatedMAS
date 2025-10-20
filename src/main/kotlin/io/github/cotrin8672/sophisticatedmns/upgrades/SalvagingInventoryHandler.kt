@@ -1,4 +1,4 @@
-package io.github.cotrin8672.sophisticatedmas.upgrades
+package io.github.cotrin8672.sophisticatedmns.upgrades
 
 import com.robertx22.mine_and_slash.itemstack.ExileStack
 import com.robertx22.mine_and_slash.saveclasses.gearitem.gear_bases.Rarity
