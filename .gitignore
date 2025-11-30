@@ -29,7 +29,10 @@ repo
 
 # serena memory
 .serena/
+.vscode
 
 # temporary files
 temp_*.py
 %SystemDrive%/
+/.kotlin
+/src/generated/resources/.cache/
