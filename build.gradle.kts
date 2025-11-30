@@ -6,7 +6,7 @@ plugins {
     `java-library`
     kotlin("jvm") version "2.0.0"
     id("net.neoforged.moddev.legacyforge") version "2.0.95"
-    id("com.hypherionmc.modutils.modpublisher") version "2.1.6"
+    id("com.hypherionmc.modutils.modpublisher") version "2.1.8"
 }
 
 val modId: String by project
@@ -150,7 +150,7 @@ publisher {
     curseID.set("1369188")
     modrinthID.set("EM6nDwFW")
     versionType.set("release")
-    // changelog.set(file("changelog.md"))
+    changelog.set(file("changelog.md"))
     version.set(project.version.toString())
     displayName.set("$modName $modVersion")
     setGameVersions(mcVersion)
@@ -161,7 +161,7 @@ publisher {
     curseDepends {
         required("kotlin-for-forge")
         required("sophisticated-backpacks")
-        required("mine-and-slash")
+        required("mine-and-slash-reloaded")
     }
     modrinthDepends {
         required("kotlin-for-forge")
