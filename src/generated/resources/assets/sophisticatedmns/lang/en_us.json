@@ -1,4 +1,6 @@
 {
   "item.sophisticatedmns.auto_salvage_upgrade": "Auto Salvage Upgrade",
-  "item.sophisticatedmns.gem_compacting_upgrade": "Gem Compacting Upgrade"
+  "item.sophisticatedmns.gem_compacting_upgrade": "Gem Compacting Upgrade",
+  "item.sophisticatedmns.auto_salvage_upgrade.tooltip": "Automatically salvages gear items based on player settings.",
+  "item.sophisticatedmns.gem_compacting_upgrade.tooltip": "Automatically compacts Mine And Slash gems."
 }

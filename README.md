@@ -1,21 +1,25 @@
 # SophisticatedMAS
 
-An addon mod for **Mine and Slash** and **Sophisticated Backpacks** that adds automatic gear salvaging directly in your
+An addon mod for **Mine and Slash** and **Sophisticated Backpacks** that adds automatic gear salvaging and gem compacting directly in your
 backpack!
 
 ## What does this mod do?
 
-This mod adds the **Auto Salvage Upgrade** for Sophisticated Backpacks. When installed in your backpack, it
-automatically salvages Mine and Slash gear items based on your salvage settings - no more manual trips to the salvaging
-station!
+This mod adds two upgrades for Sophisticated Backpacks:
+
+- **Auto Salvage Upgrade**: Automatically salvages Mine and Slash gear items based on your salvage settings
+- **Gem Compacting Upgrade**: Automatically compacts three lower-tier gems into one higher-tier gem
 
 ## Features
 
 - 🔄 **Automatic Salvaging**: Gear items are automatically salvaged when they enter your backpack
+- 💎 **Gem Compacting**: Three lower-tier gems are automatically compacted into one higher-tier gem
 - ⚙️ **Respects Your Settings**: Uses your Mine and Slash auto-salvage configuration (rarity, type, etc.)
-- 📦 **Convenient Storage**: Salvage materials go straight into your backpack
+- 📦 **Convenient Storage**: Salvage materials and compacted gems go straight into your backpack
 
 ## How to Use
+
+### Auto Salvage Upgrade
 
 1. **Craft the Auto Salvage Upgrade**
     - Check your in-game recipe viewer (JEI/REI) for the recipe
@@ -32,6 +36,20 @@ station!
 4. **Done!**
     - Gear matching your settings will be automatically salvaged
     - Materials will appear in your backpack
+
+### Gem Compacting Upgrade
+
+1. **Craft the Gem Compacting Upgrade**
+    - Check your in-game recipe viewer (JEI/REI) for the recipe
+
+2. **Install it in your backpack**
+    - Open your Sophisticated Backpack
+    - Go to the Upgrades tab
+    - Place the Gem Compacting Upgrade in an upgrade slot
+
+3. **Done!**
+    - Three lower-tier gems will be automatically compacted into one higher-tier gem
+    - Compacted gems will appear in your backpack
 
 ## Issues & Support
 

@@ -1,4 +1,6 @@
 {
   "item.sophisticatedmns.auto_salvage_upgrade": "自動サルベージアップグレード",
-  "item.sophisticatedmns.auto_salvage_upgrade.tooltip": "プレイヤー設定に応じてギアアイテムを自動でサルベージします。"
+  "item.sophisticatedmns.auto_salvage_upgrade.tooltip": "プレイヤー設定に応じてギアアイテムを自動でサルベージします。",
+  "item.sophisticatedmns.gem_compacting_upgrade": "宝石圧縮アップグレード",
+  "item.sophisticatedmns.gem_compacting_upgrade.tooltip": "Mine And Slashの宝石を自動圧縮します。"
 }
