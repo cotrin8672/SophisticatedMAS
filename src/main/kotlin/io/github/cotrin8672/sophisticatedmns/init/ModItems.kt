@@ -3,6 +3,7 @@ package io.github.cotrin8672.sophisticatedmns.init
 import com.tterrag.registrate.util.entry.ItemEntry
 import io.github.cotrin8672.sophisticatedmns.SophisticatedMnS
 import io.github.cotrin8672.sophisticatedmns.upgrades.AutoSalvageUpgradeItem
+import io.github.cotrin8672.sophisticatedmns.upgrades.GemCompactingUpgradeItem
 import net.p3pp3rf1y.sophisticatedbackpacks.init.ModItems.BACKPACK_UPGRADE_TAG
 import net.p3pp3rf1y.sophisticatedbackpacks.init.ModItems.CREATIVE_TAB
 
@@ -20,6 +21,18 @@ object ModItems {
         .properties { p -> p.stacksTo(1) }
         .tag(BACKPACK_UPGRADE_TAG)
         .defaultModel()                                                 // デフォルトの生成モデル
+        .defaultLang()
+        .register()
+
+    /**
+     * Gem自動圧縮アップグレードアイテム
+     */
+    val GEM_COMPACTING_UPGRADE: ItemEntry<GemCompactingUpgradeItem> = SophisticatedMnS.Registrate
+        .item<GemCompactingUpgradeItem>("gem_compacting_upgrade") { GemCompactingUpgradeItem() }
+        .tab(CREATIVE_TAB.key!!)
+        .properties { p -> p.stacksTo(1) }
+        .tag(BACKPACK_UPGRADE_TAG)
+        .defaultModel()
         .defaultLang()
         .register()
 
